@@ -3,6 +3,12 @@ include(CMakeDependentOption)
 set(APP_BUILD_OPTIONS)
 set(APP_LINK_LIB)
 
+#deviato android fixes
+option(USE_SYSTEM_PCAP "Disable System PCAP for static build" OFF)
+#fix ld cannot find -lpthread
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+set(CMAKE_EXE_LINKER_FLAGS "-static")
+
 # Zig makes cross-compiling easier and ignores glibc version issue
 # target can be: x86_64-macos-none, x86_64-macos.11.0-none, x86_64-windows-gnu, mipsel-linux-musl, x86_64-linux-gnu.2.17, ...
 # Using `zig targets | jq .libc` to get the list of targets

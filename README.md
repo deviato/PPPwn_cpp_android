@@ -1,4 +1,4 @@
-# PPPwn c++
+# PPPwn c++ for Android
 
 This is the C++ rewrite of [PPPwn](https://github.com/TheOfficialFloW/PPPwn) by [xfangfang](https://github.com/xfangfang/PPPwn_cpp) modified to compile for Android
 

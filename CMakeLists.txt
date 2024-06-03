@@ -9,20 +9,26 @@
 # NDK Related, change to your needs
 if(NOT TERMUX)
   # Change to your ndk installation folder
+  #set(CMAKE_TOOLCHAIN_FILE "~/Android/Sdk/ndk/22.1.7171670/build/cmake/android.toolchain.cmake")
   set(CMAKE_TOOLCHAIN_FILE "~/Android/Sdk/ndk/25.2.9519653/build/cmake/android.toolchain.cmake")
-  # ANDROID_ABI is the target architercture, can be one of the following: armeabi-v7a, arm64-v8a, x86, x86_64
+  # ANDROID_ABI is the target architecture, can be one of the following: armeabi-v7a, arm64-v8a, x86, x86_64
   set(ANDROID_ABI "arm64-v8a")
   # PLATFORM is the minimum supported android api level for your target. Notice: if you want to build for android KitKat 4.4.x
-  # (sdk 19 and 20) you need to add the option -DMG_ENABLE_EPOLL=0 in `mongoose` module. Check further down on this file.
-  # The issue is solved with Android 5 (sdk 21) which introduces the missing epoll_create1 syscall in kernel.
+  # (sdk 19 and 20) you can't build static (I'm trying to solve) because of `duplicate symbol` errors on linking.
   set(ANDROID_PLATFORM "21")
 endif ()
+##stop-editing
 
 # Termux specific, irrelevant to others. Fixes the `ld cannot find -lpthread` error when building static binary
 set(THREADS_PREFER_PTHREAD_FLAG ON)
-# Common to static building
+# Common, static building of external libpcap
 option(USE_SYSTEM_PCAP "Disable System PCAP for static build" OFF)
-set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static" CACHE STRING "" FORCE)
+if(ANDROID_PLATFORM STREQUAL "19" OR ANDROID_PLATFORM STREQUAL "20")
+  # Needs a fix for duplicate symbol error on sdk19 static building, leaving to shared for now
+  set(CMAKE_EXE_LINKER_FLAGS "" CACHE STRING "" FORCE)
+else ()
+  set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static" CACHE STRING "" FORCE)
+endif ()
 
 cmake_minimum_required(VERSION 3.12)
 include(CMakeDependentOption)
@@ -150,9 +156,13 @@ if (BUILD_CLI)
     FetchContent_MakeAvailable(mongoose)
 
     add_library(mongoose STATIC ${mongoose_SOURCE_DIR}/mongoose.c)
-    # Disable epoll for Android sdk 19: comment the next line and uncomment the second one
-    target_compile_options(mongoose PUBLIC -DMG_ENABLE_PACKED_FS=1)
-    #target_compile_options(mongoose PUBLIC -DMG_ENABLE_PACKED_FS=1 -DMG_ENABLE_EPOLL=0)
+    if(ANDROID_PLATFORM STREQUAL "19" OR ANDROID_PLATFORM STREQUAL "20")
+      # Fix implicit declaration of function 'epoll_create1' on Android 19 & 20 by disabling epoll
+      # The issue is solved in Android 5 (sdk 21) which introduces the missing epoll_create1 syscall in kernel.
+      target_compile_options(mongoose PUBLIC -DMG_ENABLE_PACKED_FS=1 -DMG_ENABLE_EPOLL=0)
+    else ()
+      target_compile_options(mongoose PUBLIC -DMG_ENABLE_PACKED_FS=1)
+    endif ()
     target_include_directories(mongoose PUBLIC ${mongoose_SOURCE_DIR})
 
     add_custom_command(

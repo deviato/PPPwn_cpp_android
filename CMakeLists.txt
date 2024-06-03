@@ -1,13 +1,33 @@
+# [ Deviato android fixes for PPPwn_cpp ]
+# This file is intended for use with NDK builder on Linux machines
+# If you want to compile this natively in Termux, just call the script with `cmake -B build -DTERMUX=1`
+# otherwise you have to set the options below to reflect your building system and your desired target.
+# I assumed a default download of NDK r25c in your ~/Android/Sdk/ndk (standard from android studio)
+# because it's the last one that supports Android sdk19 (KitKat 4.4) builds.
+# The default minimum target is set as Lollipop 5.0 (sdk 21) for arm64 processors.
+
+# NDK Related, change to your needs
+if(NOT TERMUX)
+  # Change to your ndk installation folder
+  set(CMAKE_TOOLCHAIN_FILE "~/Android/Sdk/ndk/25.2.9519653/build/cmake/android.toolchain.cmake")
+  # ANDROID_ABI is the target architercture, can be one of the following: armeabi-v7a, arm64-v8a, x86, x86_64
+  set(ANDROID_ABI "arm64-v8a")
+  # PLATFORM is the minimum supported android api level for your target. Notice: if you want to build for android KitKat 4.4.x
+  # (sdk 19 and 20) you need to add the option -DMG_ENABLE_EPOLL=0 in `mongoose` module. Check further down on this file.
+  # The issue is solved with Android 5 (sdk 21) which introduces the missing epoll_create1 syscall in kernel.
+  set(ANDROID_PLATFORM "21")
+endif ()
+
+# Termux specific, irrelevant to others. Fixes the `ld cannot find -lpthread` error when building static binary
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+# Common to static building
+option(USE_SYSTEM_PCAP "Disable System PCAP for static build" OFF)
+set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static" CACHE STRING "" FORCE)
+
 cmake_minimum_required(VERSION 3.12)
 include(CMakeDependentOption)
 set(APP_BUILD_OPTIONS)
 set(APP_LINK_LIB)
-
-#deviato android fixes
-option(USE_SYSTEM_PCAP "Disable System PCAP for static build" OFF)
-#fix ld cannot find -lpthread
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-set(CMAKE_EXE_LINKER_FLAGS "-static")
 
 # Zig makes cross-compiling easier and ignores glibc version issue
 # target can be: x86_64-macos-none, x86_64-macos.11.0-none, x86_64-windows-gnu, mipsel-linux-musl, x86_64-linux-gnu.2.17, ...
@@ -130,7 +150,9 @@ if (BUILD_CLI)
     FetchContent_MakeAvailable(mongoose)
 
     add_library(mongoose STATIC ${mongoose_SOURCE_DIR}/mongoose.c)
-    target_compile_options(mongoose PUBLIC -DMG_ENABLE_PACKED_FS=1)
+    # Disable epoll for Android sdk 19: comment the next line and uncomment the second one
+    #target_compile_options(mongoose PUBLIC -DMG_ENABLE_PACKED_FS=1)
+    target_compile_options(mongoose PUBLIC -DMG_ENABLE_PACKED_FS=1 -DMG_ENABLE_EPOLL=0)
     target_include_directories(mongoose PUBLIC ${mongoose_SOURCE_DIR})
 
     add_custom_command(

@@ -1,24 +1,57 @@
 # PPPwn c++
 
-This is the C++ rewrite of [PPPwn](https://github.com/TheOfficialFloW/PPPwn)
+This is the C++ rewrite of [PPPwn](https://github.com/TheOfficialFloW/PPPwn) by [xfangfang](https://github.com/xfangfang/PPPwn_cpp) modified to compile for Android
 
 # Features
 
-- Smaller binary size
-- A wide range of CPU architectures and systems are supported
-- Run faster under Windows (more accurate sleep time)
-- Restart automatically when failing
-- Can be compiled as a library integrated into your application
+- The same as xfanfang one
+- Can compile from NDK or Termux app
+- Supported target Android versions from KitKat 4.4 up
 
-# Nightly build
+# Building
 
-You can download the latest build from [nightly.link](https://nightly.link/xfangfang/PPPwn_cpp/workflows/ci.yaml/main?status=completed).
+### Building from native Linux machine
 
-For Windows users, you need to install [npcap](https://npcap.com) before run this program.
-There are lots of GUI wrapper for pppwn_cpp, it's better to use them if you are not familiar with command line.
+Download your desired NDK version through Android Studio or directly from official [github](https://github.com/android/ndk/releases). If you want to compile for Android 4.4.x targets you must download version [r25c here](https://dl.google.com/android/repository/android-ndk-r25c-linux.zip), otherwise you can use a more recent one.
 
-For macOS users, you need to run `sudo xattr -rd com.apple.quarantine <path-to-pppwn>` after download.
-Please refer to [#10](https://github.com/xfangfang/PPPwn_cpp/issues/10) for more information.
+Extract the files in your <home>/Android/Sdk/ndk or other preferred folder.
+
+Clone this repository with
+```shell
+git clone --recursive https://github.com/deviato/PPPwn_cpp_android.git
+cd PPPwn_cpp_android
+```
+Edit `CMakeLists.txt` file and change the options to reflect your system and desired target (info inside the file).
+
+Run these commands to build the binary:
+```shell
+cmake -B build
+cmake --build build -t pppwn
+```
+The resulting binary will be in build/pppwn
+
+### Building from Termux app directly on your phone
+
+Download Termux app (not GooglePlay but [F-Droid version here](https://f-droid.org/repo/com.termux_118.apk)) and install on your phone.
+Open the app and run these commands:
+```shell
+apt -y update && apt -y upgrade && apt -y update
+# (respond y to every question)
+apt install -y git build-essential binutils file ndk-multilib-native-static termux-elf-cleaner tsu
+# Clone this repository
+git clone --recursive https://github.com/deviato/PPPwn_cpp_android.git
+cd PPPwn_cpp_android
+# Build for your device
+cmake -B build -DTERMUX=1
+cmake --build build -t pppwn
+# If no errors, your target is in build/pppwn, but you need to realign TLS before running:
+termux-elf-cleaner build/pppwn
+# Optionally strip debug symbols with:
+strip build/pppwn
+# You can now try to run the build with root:
+tsu
+build/pppwn
+```
 
 # Usage
 
@@ -62,34 +95,7 @@ Supplement:
 4. For `--groom-delay`, This is an empirical value. The Python version of pppwn does not set any wait at Heap grooming, but if the C++ version does not add some wait, there is a probability of kernel panic on my ps4. You can set any value within 1-4097 (4097 is equivalent to not doing any wait).
 5. For `--buffer-size`, When running on low-end devices, this value can be set to reduce memory usage. I tested that setting it to 10240 can run normally, and the memory usage is about 3MB. (Note: A value that is too small may cause some packets to not be captured properly)
 
-# Development
-
-This project depends on [pcap](https://github.com/the-tcpdump-group/libpcap), cmake will search for it in the system path by default.
-You can also add cmake option `-DUSE_SYSTEM_PCAP=OFF` to compile pcap from source (can be used when cross-compiling).
-
-Please refer to the workflow file [.github/workflows/ci.yaml](.github/workflows/ci.yaml) for more information.
-
-```shell
-# native build (macOS, Linux)
-cmake -B build
-cmake --build build -t pppwn
-
-# cross compile for mipsel linux (soft float)
-cmake -B build -DZIG_TARGET=mipsel-linux-musl -DUSE_SYSTEM_PCAP=OFF -DZIG_COMPILE_OPTION="-msoft-float"
-cmake --build build -t pppwn
-
-# cross compile for arm linux (armv7 cortex-a7)
-cmake -B build -DZIG_TARGET=arm-linux-musleabi -DUSE_SYSTEM_PCAP=OFF -DZIG_COMPILE_OPTION="-mcpu=cortex_a7"
-cmake --build build -t pppwn
-
-# cross compile for Windows
-# https://npcap.com/dist/npcap-sdk-1.13.zip
-cmake -B build -DZIG_TARGET=x86_64-windows-gnu -DUSE_SYSTEM_PCAP=OFF -DPacket_ROOT=<path to npcap sdk>
-cmake --build build -t pppwn
-```
-
 # Credits
 
-Big thanks to FloW's magical work, you are my hero.
-
-
+Big thanks to xfangfang's magical work, you are my hero.
+And to FloW's magical work, which is xfangfang's hero (and consequently mine too).

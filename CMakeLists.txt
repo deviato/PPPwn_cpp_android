@@ -151,8 +151,8 @@ if (BUILD_CLI)
 
     add_library(mongoose STATIC ${mongoose_SOURCE_DIR}/mongoose.c)
     # Disable epoll for Android sdk 19: comment the next line and uncomment the second one
-    #target_compile_options(mongoose PUBLIC -DMG_ENABLE_PACKED_FS=1)
-    target_compile_options(mongoose PUBLIC -DMG_ENABLE_PACKED_FS=1 -DMG_ENABLE_EPOLL=0)
+    target_compile_options(mongoose PUBLIC -DMG_ENABLE_PACKED_FS=1)
+    #target_compile_options(mongoose PUBLIC -DMG_ENABLE_PACKED_FS=1 -DMG_ENABLE_EPOLL=0)
     target_include_directories(mongoose PUBLIC ${mongoose_SOURCE_DIR})
 
     add_custom_command(

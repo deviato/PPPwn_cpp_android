@@ -19,16 +19,17 @@ if(NOT TERMUX)
 endif ()
 ##stop-editing
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Termux specific, irrelevant to others. Fixes the `ld cannot find -lpthread` error when building static binary
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 # Common, static building of external libpcap
 option(USE_SYSTEM_PCAP "Disable System PCAP for static build" OFF)
 if(ANDROID_PLATFORM STREQUAL "19" OR ANDROID_PLATFORM STREQUAL "20")
   # Needs a fix for duplicate symbol error on sdk19 static building, leaving to shared for now
-  set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++" CACHE STRING "" FORCE)
-  #set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static -z muldefs" CACHE STRING "" FORCE)
+  set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -fPIC -fPIE" CACHE STRING "" FORCE)
+  # NW set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static -z muldefs" CACHE STRING "" FORCE)
 else ()
-  set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static" CACHE STRING "" FORCE)
+  set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static -fPIC -fPIE" CACHE STRING "" FORCE)
 endif ()
 
 cmake_minimum_required(VERSION 3.12)

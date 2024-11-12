@@ -27,6 +27,8 @@ Run these commands to build the binary:
 ```shell
 cmake -B build
 cmake --build build -t pppwn
+# Optionally strip debug symbols with:
+llvm-strip build/pppwn
 ```
 The resulting binary will be in build/pppwn
 

@@ -147,7 +147,7 @@ target_link_libraries(${PROJECT_NAME}_static PUBLIC ${APP_LINK_LIB})
 target_compile_options(${PROJECT_NAME}_static PUBLIC ${APP_BUILD_OPTIONS})
 target_include_directories(${PROJECT_NAME}_static PUBLIC include)
 
-#Remove -g flag for NDK cc
+# Remove -g flag for NDK cc
 string(REPLACE "-g " "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 if (BUILD_CLI)
     include(FetchContent)
